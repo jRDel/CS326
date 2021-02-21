@@ -1,0 +1,89 @@
+;This is hw2 for CS326. Jakob Delossantos
+
+; Question 1
+(define (subst x y L)
+  (cond
+    ((null? L) '())
+    ((equal? x (car L)) (cons y (subst x y (cdr L))))
+    (else (cons (car L) (subst x y (cdr L))))))
+
+;Question 2
+(define (all-different? L)
+    (cond
+        ((null? L) #t)
+        ((member? (car L) (cdr L)) #f)
+        (else (all-different? (cdr L)))))
+
+(define(member? x L)
+    (cond
+        ((null? L) #f)
+        ((equal? x(car L)) #t)
+        (else (member? x(cdr L)))))
+
+;Question 3
+
+(define T
+'(13
+    (5
+        (1 () ())
+        (8 ()
+            (9 () ())))
+        (22
+            (17 () ())
+            (25 () ()))))
+
+(define (left T)
+    (cadr T)) ;the left subtree is formatted as first element after root
+
+(define (right T)
+    (caddr T)) ; the right subtree is formatted as second element after root
+
+(define (val T)
+    (if (null? (car T)) '() (car T)))
+
+    ;(a)
+
+    (define (n-nodes T)
+    (cond ((null? T) 0) ;base case, if the tree or subtree of course return 0
+        (else (+ 1 (n-nodes (left T)) (n-nodes (right T)))))) ;add one for the current node then continue traversing subtrees
+
+    ;(b)
+
+    (define (n-leaves T)
+    (cond ((null? T) 0)
+        ((and (null? (left T)) (null? (right T))) 1) ; if the left and right subtree are null, then its a leaf
+        (else (+ (n-leaves (left T)) (n-leaves (right T)))))) ;if the left and right aren't null, then keep going. recursively add up
+
+    ;(c)
+
+    (define (height T)
+        (cond 
+            ((null? T) 0) ; base case, if null tree or subtree of course return 0
+            (else (+ 1 (max (height (left T)) (height (right T))))))) ; add one, and take the maximum of arguments according to scheme max function
+
+    ;(d)
+
+    (define (postorder T)
+    (cond 
+            ((null? T) '()) ;base case, if null value in tree then empty list, move to next part in tree
+            (else (append (postorder (left T)) (postorder (right T)) (list (val T)))))) ;append the left subtree and right, postorder= left, right, root, print out value at that point
+
+;(4)
+
+(define (flatten L)
+    (cond 
+        ((null? L) '()) ;base case, if null value in list then return empty list
+        ((list? L) (append (flatten (car L)) (flatten (cdr L)))) ; if list, then must call flatten on head and tail and append recursively back up
+        (else (list L)))) ;if not a list, can output
+
+;(5)
+
+(define(member-bst? x T)
+    (cond
+    ((null? T) #f)
+    ((< x (val T)) (member-bst? x (left T)))
+    ((> x (val T)) (member-bst? x (right T)))
+    (else (equal? x (val T)))))
+
+
+
