@@ -80,10 +80,10 @@
 
 (define(member-bst? x T)
     (cond
-    ((null? T) #f)
-    ((< x (val T)) (member-bst? x (left T)))
-    ((> x (val T)) (member-bst? x (right T)))
-    (else (equal? x (val T)))))
+    ((null? T) #f) ;base case, if the tree is null then the value is not a member of the tree
+    ((< x (val T)) (member-bst? x (left T))) ;binary search left first
+    ((> x (val T)) (member-bst? x (right T))) ;binary search right second
+    (else (equal? x (val T))))) ;if values are equal then it is member of tree
 
 
 
