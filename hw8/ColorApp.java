@@ -9,7 +9,10 @@ import java.awt.event.*;
 
 import java.util.ArrayList;
 
-
+/**
+*
+*Class that generates the whole window
+*/
 public class ColorApp extends JFrame
 {
 	protected Drawing colorBlock;
@@ -33,8 +36,12 @@ public class ColorApp extends JFrame
 	protected JList listColors;
 	protected static ArrayList <String> lines;
 
-	//protected FileIODemo file;
- 
+	
+	/**
+	*
+	* Main function for initializing the window and reading from input file.
+	* @throws IOException if cannot read from the file
+	*/
   	public static void main(String argv []) throws IOException
 	{
 
@@ -64,22 +71,73 @@ public class ColorApp extends JFrame
 			stream.close();
 	}
 	
-
+	/**
+	*
+	* Writes to the save file; Used for restoring last saved color on restart and reset.
+	*
+	*/
+	public void writeForSave() throws IOException
+	{
+		FileOutputStream ostream = new FileOutputStream("saveFile.txt");
+		PrintWriter writer = new PrintWriter(ostream);
+		String s = (Red.getText() + " " + Green.getText() + " " + Blue.getText());
+		writer.println(s);
+		writer.flush();
+		ostream.close();
+	}
 	
+	/**
+	*
+	* Reads from the save file. Used for restoring last saved color on restart and reset.
+	*
+	*/
+	public String readForSave() throws IOException
+	{
+			FileInputStream istream = new FileInputStream("saveFile.txt");
+			InputStreamReader reader = new InputStreamReader(istream);
+			StreamTokenizer tokens = new StreamTokenizer(reader);
+			String line=("255 0 0");
+			int n1, n2, n3;
+
+			while(tokens.nextToken()!=tokens.TT_EOF)
+			{
+
+				n1= (int) tokens.nval;
+				tokens.nextToken();
+				n2 = (int) tokens.nval;
+				tokens.nextToken();
+				n3 = (int) tokens.nval;
+
+				line = (n1 + " " + n2 + " " + n3);
+			
+			}
+			istream.close();
+			return line;
+	}
+	
+	/**
+	*
+	* Function that is called by the main function; Used for instantiating the window and components.
+	*
+	*/
 	public ColorApp(String title)
 	{
-		
+		//Title and window listener
 		super(title);
 		addWindowListener(new WindowDestroyer());
 		
+		//List of colors to choose from.
 		listColors = new JList();
 		listColors.addListSelectionListener(new ListHandler());
 		
+		//Allows scrolling for colors.
 		getContentPane().add(new JScrollPane(listColors));
 
+		//Save and reset button
 		buttonSave = new JButton("Save");
 		buttonReset = new JButton("Reset");
 
+		//Plus and minus buttons along with listeners.
 		plusR = new JButton("+");
 		minusR = new JButton("-");
 		plusG = new JButton("+");
@@ -93,10 +151,10 @@ public class ColorApp extends JFrame
 		minusG.addActionListener(new ActionHandler());        
 		plusB.addActionListener(new ActionHandler());                 
 		minusB.addActionListener(new ActionHandler());   
-
 		buttonSave.addActionListener(new ActionHandler());                 
 		buttonReset.addActionListener(new ActionHandler());                 
 
+		//Color block and RGB fields
 		colorBlock = new Drawing();
 		Red = new JTextField("");
 		labelRed = new JLabel("Red:");
@@ -105,6 +163,7 @@ public class ColorApp extends JFrame
 		Green = new JTextField("");
 		Blue = new JTextField("");
 
+		//Menu for clear and exit functions
 		mb = new JMenuBar();
 		m = new JMenu("Actions");
 		mi = new JMenuItem[2];
@@ -169,93 +228,189 @@ public class ColorApp extends JFrame
 		setSize(new Dimension(500, 500));
 		setVisible(true);
 		
-		Red.setText("255");
-		Green.setText("0");
-		Blue.setText("0");
+		
+		//Read from last save
+		try
+		{
+			
+			String last = readForSave();
+			String [] splitted = last.split("\\s+");
+			Red.setText(splitted[0]);
+			Green.setText(splitted[1]);
+			Blue.setText(splitted[2]);
+			
+		}
+		catch(IOException ex1)
+		{
+			System.out.println("Couldn't grab last save.");
+			Red.setText("255");
+			Green.setText("0");
+			Blue.setText("0");
+		}
+		
 
 	}
 
-	// Define window adapter                                       
+	// Define window adapter child class                                      
 	private class WindowDestroyer extends WindowAdapter 
 	{      
 		public void windowClosing(WindowEvent e) 
 		{    System.exit(0);  }                                                             
 	}
-	// Define action listener                                       
+	
+	// Define action listener child class                                      
 	private class ActionHandler implements ActionListener 
 	{      
 		public void actionPerformed(ActionEvent e)
 		{
 		   if ( e.getSource() == buttonSave )
 		   {
-		      String s1 = Red.getText();
-		      String s2 = Blue.getText();
-			  String s3 = Green.getText();
-		      System.out.println("R: " + s1 + " B: " + s2 + " G: " + s3);
+			  try
+			  {
+				writeForSave();
+				System.out.println("Colors saved. Will be restored upon restart.");
+				setTitle("Color Sampler");
+			  }
+			  catch(IOException ex)
+			  {
+				  System.out.println("Could not output to save file.");
+			  }
+			  
 			  colorBlock.repaint();
 		   }
 		   else if ( e.getSource() == buttonReset )
 		   {
-		      System.out.println("You pressed the Reset button.");
-			  Red.setText("255");
-		      Blue.setText("0");
-			  Green.setText("0");
+		      System.out.println("You pressed the Reset button. Last saved will be restored.");
+				try
+				{
+					String last = readForSave();
+					String [] splitted = last.split("\\s+");
+					Red.setText(splitted[0]);
+					Green.setText(splitted[1]);
+					Blue.setText(splitted[2]);
+					setTitle("Color Sampler");
+				}
+				catch(IOException ex1)
+				{
+					System.out.println("Couldn't grab last save.");
+					Red.setText("255");
+					Green.setText("0");
+					Blue.setText("0");
+				}
 			  colorBlock.repaint();
 		   }
 		   else	if ( e.getSource() == mi[0] )		// clear
 		   {
-		      Red.setText("");
-		      Blue.setText("");
-			  Green.setText("");
+		      Red.setText("0");
+		      Blue.setText("0");
+			  Green.setText("0");
+			  colorBlock.repaint();
+			  setTitle("Color Sampler*");
 		   }
 		   else	if ( e.getSource() == mi[1] )		// exit
 		      System.exit(0);
 		   else if (e.getSource() == plusR || e.getSource() == plusG | e.getSource() ==  plusB)
 		   {
+			   setTitle("Color Sampler*");
 				if(e.getSource() == plusR)
 				{
 					int num = Integer.parseInt(Red.getText());
-					num = num + 5;
+					if(num<255)
+					{
+						num = num + 5;
+					}
+					else
+					{ 
+						System.out.println("Cannot exceed a value above 255.");
+						num=255;
+					}
 					Red.setText(String.valueOf(num));
+					colorBlock.repaint();
 				}
 				if(e.getSource() == plusG)
 				{
 					int num = Integer.parseInt(Green.getText());
-					num = num + 5;
+					if(num<255)
+					{
+						num = num + 5;
+					}
+					else
+					{ 
+						System.out.println("Cannot exceed a value above 255.");
+						num=255;
+					}
 					Green.setText(String.valueOf(num));
+					colorBlock.repaint();
 				}
 				if(e.getSource() == plusB)
 				{
 					int num = Integer.parseInt(Blue.getText());
-					num = num + 5;
+					if(num<255)
+					{
+						num = num + 5;
+					}
+					else
+					{ 
+						System.out.println("Cannot exceed a value above 255.");
+						num=255;
+					}
 					Blue.setText(String.valueOf(num));
+					colorBlock.repaint();
 				}
 		   }
 		   else if (e.getSource() == minusR || e.getSource() == minusG | e.getSource() ==  minusB)
 		   {
+			   setTitle("Color Sampler*");
 				if(e.getSource() == minusR)
 				{
 					int num = Integer.parseInt(Red.getText());
-					num = num - 5;
+					if(num>0)
+					{
+						num = num - 5;
+					}
+					else
+					{
+						System.out.println("Cannot choose a color value below 0.");
+						num=0;
+					}
 					Red.setText(String.valueOf(num));
+					colorBlock.repaint();
 				}
 				if(e.getSource() == minusG)
 				{
 					int num = Integer.parseInt(Green.getText());
-					num = num - 5;
+					if(num>0)
+					{
+						num = num - 5;
+					}
+					else
+					{
+						System.out.println("Cannot choose a color value below 0.");
+						num=0;
+					}
 					Green.setText(String.valueOf(num));
+					colorBlock.repaint();
 				}
 				if(e.getSource() == minusB)
 				{
 					int num = Integer.parseInt(Blue.getText());
-					num = num - 5;
+					if(num>0)
+					{
+						num = num - 5;
+					}
+					else
+					{
+						System.out.println("Cannot choose a color value below 0.");
+						num=0;
+					}
 					Blue.setText(String.valueOf(num));
+					colorBlock.repaint();
 				}
 		   }
 		}
 	}                                                              
 
-	//Define colorBlock
+	//Define Drawing child class for colorBlock
 	public class Drawing extends JComponent
 	{
 		public void paint(Graphics g)
@@ -278,27 +433,26 @@ public class ColorApp extends JFrame
 	}
 
 
-	//Define list listener
+	//Define list listener child class
 	private class ListHandler implements ListSelectionListener
 	{
 		public void valueChanged(ListSelectionEvent e)
 		{
+			setTitle("Color Sampler*");
 			if(e.getSource() == listColors)
 			{
 				if(!e.getValueIsAdjusting())
 				{
-					//int i = listColors.getSelectedIndex();
+					int index = listColors.getSelectedIndex();
 					String s = (String) listColors.getSelectedValue();
-					System.out.println("Selected:" + s);
-					
 
-					String line = lines.get(1);
+					String line = lines.get(index);
 					String [] splitStr = line.split("\\s+");
 
 					Red.setText(splitStr[1]);
 					Green.setText(splitStr[2]);
 					Blue.setText(splitStr[3]);
-					//System.out.println("Position " + i + " selected: " +s);
+					
 					colorBlock.repaint();
 					
 
